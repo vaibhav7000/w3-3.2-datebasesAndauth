@@ -5,7 +5,7 @@
 
 // Authentication -> process in which we check if the user is allowed to enter to the system (in http servers authenication means checking the user if he / she can use the functionalities / logic present in the route-handler)
 
-// For doing authentication we require 3 concepts 1. hashing, 2. encryption description, 3. json web tokens (jwt)
+// For authentication we require 3 concepts 1. hashing, 2. encryption description, 3. json web tokens (jwt)
 
 // hashing -> in hashing ( we will use functin for this output) we convert the string into random characters such that no one can predict that orignal string and we are neverever going to convert the random characters in original string, the function can always through the same ramdom characters for the same string.
 
