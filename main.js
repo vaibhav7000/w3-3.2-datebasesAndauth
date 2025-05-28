@@ -79,10 +79,41 @@ app.post("/signin", userInputValidation, belongsToSystem, function(req, res) {
     const password = req.headers["password"]
 
     // getting the token using jsonwebtoken libray with password. either give it JSON data or js object both will be fine
-    const token = jwt.sign(JSON.stringify({userName}), jwtPass);
+    const token = jwt.sign(JSON.stringify({userName}), jwtPass); // store the token in the local storage
 
     res.status(200).json({
         token
+    })
+})
+
+function verfiyJWT(req, res, next) {
+    const token = req.headers["token"];
+
+    const jwtSchema = z.string();
+
+    const result = jwtSchema.safeParse(token);
+
+    if(!result.success) {
+        res.status(411).send("invalid format of token")
+        return
+    }
+
+    try {
+    const verification = jwt.verify(token, jwtPass); // if the verification is successful than provides the JSON data in the valid format (js object) else throw error just like the parse in zod
+    req.user = verification;
+    next();
+    } catch(err) {
+        res.status(200).send("Cannot verify token")
+    }
+
+}
+
+// user route-handler only those request will get the users if they have valid jwt
+app.get("/user", verfiyJWT, function(req, res) {
+    const user = req.user;
+
+    res.status(200).json({
+        storage: storage.filter(u => u.userName !== user.userName),
     })
 })
 
@@ -106,8 +137,8 @@ app.use(function(req, res, next) {
 
 app.listen(port);
 
-// we will be using the "jsonwebtoken library" to implement the jwt (token) token is returned by doing hashing + encryption-decryption on the JSON data with some password using jsonwebtokens.sign(JSONData, password). any system can re-convert the token into the JSON data, but the system that has the original password while converting the JSON data can only verify (jsonwebtoken.verify(token, password)) it (sought of check checking machine in banks)
+// we will be using the "jsonwebtoken library" to implement the jwt (token) token is returned by doing hashing + encryption-decryption on the JSON data with some password using jsonwebtokens.sign(JSONData, password). any system can re-convert the token into the JSON data, but the system that has the "original password" while converting the JSON data can only verify (jsonwebtoken.verify(token, password)) it (sought of check checking machine in banks)
 
-// verification will be successfull if the token is made from the same provided that is used in the verify method
+// verification will be successfull if the token is made from the same provided password that is used in the verify method
 
 // response.json() , response.text() -> kind of decrypting data into the original format
