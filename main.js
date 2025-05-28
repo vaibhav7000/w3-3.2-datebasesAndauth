@@ -108,4 +108,6 @@ app.listen(port);
 
 // we will be using the "jsonwebtoken library" to implement the jwt (token) token is returned by doing hashing + encryption-decryption on the JSON data with some password using jsonwebtokens.sign(JSONData, password). any system can re-convert the token into the JSON data, but the system that has the original password while converting the JSON data can only verify (jsonwebtoken.verify(token, password)) it (sought of check checking machine in banks)
 
+// verification will be successfull if the token is made from the same provided that is used in the verify method
+
 // response.json() , response.text() -> kind of decrypting data into the original format
