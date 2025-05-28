@@ -18,3 +18,23 @@
 
 // Different languages provides different functions that makes request to the backend application (fetch -> JS)
 // In backend (http servers) authentication is process (function call) in which we check if the request / client / user belongs to the system ( can use the functionality present inside the route-handlers)
+
+
+// Databases are the replacement for the in-house storage that we create in the backend application because if the server crashes / restarts then all the data stored will be lost
+
+// 4 types of database 1. sql db, 2. nosql db, 3. vector db, 4. graph db
+
+// nosql databases
+// MongoDB is the implementation for the nosql database => using MongoDB to store the data
+// In nosql DB there are collections / table, in collection we dump the JSON format data, it is schemaless (can dump anything in tables / collections in the JSON format)
+
+
+// MongoDB provides us the clusters / machines in which we will create different nosql Databases (buckets) and we have (create)collections / tables in db where the JSON data in dump
+
+// Know we have to "connect the backend with the database" for these we have libraries like mongoose that will do the connection, only we have to provide the connection url and password
+
+// we can do the connection without any libraries usign nodeJS + adding, updating, deleting stuff, but these libraries provides some extra features like mongoDB validation (since it is schemaless but using mongoose we can do the validation)
+
+
+// vc160222
+// x8TOIKGv5jVJDlXV
