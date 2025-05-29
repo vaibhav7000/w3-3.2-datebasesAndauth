@@ -30,9 +30,7 @@ const userSchema = new mongoose.Schema({
 })
 
 // Through schema we will define models (kind of class) that will be used to construct object
-const user = new mongoose.model("User", userSchema); // created a model with name "User" -> which mongoose will use to do the CRUD on "User" colllection which will be created if not present, hence it also represents the collection-name. Mongoose will pluralize it and make it lowercase
-
-// this model will be used to create objects that will be stored in the databse
+const user = new mongoose.model("User", userSchema); // created a model with name "User" -> which mongoose will use to do the CRUD on "users" colllection which will be created if not present, hence it also represents the collection-name. Mongoose will pluralize it and make it lowercase
 const endUser1 = new user({
     username: "Vaibhav",
     password: "pass"
