@@ -31,9 +31,13 @@
 
 // MongoDB provides us the clusters / machines in which we will create different nosql Databases (buckets) and we have (create)collections / tables in db where the JSON data in dump
 
+// In nosql databases we can dump can JSON data ( nosql -> schemaless)
+
 // Know we have to "connect the backend with the database" for these we have libraries like mongoose that will do the connection, only we have to provide the connection url and password
 
-// we can do the connection without any libraries usign nodeJS + adding, updating, deleting stuff, but these libraries provides some extra features like mongoDB validation (since it is schemaless but using mongoose we can do the validation)
+// we can do the connection without any libraries usign nodeJS + adding, updating, deleting stuff, but these libraries provides some extra features like moongose provides mongoDB validation  (since it is schemaless but using mongoose we can do the validation on the data that we will dump in the collections)
+
+// MongoDB provides the url of the machine / cluster with the admin and password and using mongoose we can do the communication with the mongoDB cluster
 
 
 // vc160222
