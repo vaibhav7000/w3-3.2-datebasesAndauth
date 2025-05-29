@@ -2,8 +2,9 @@ const express = require("express");
 const app = express();
 const z = require("zod");
 const jwt = require("jsonwebtoken");
+const jwtPass = "random123"; // secret
 const mongoose = require("mongoose");
-const connection_url = "mongodb+srv://vc160222:x8TOIKGv5jVJDlXV@weekthreepoint2database.tjr09d4.mongodb.net/todo_user"; // this will create noSQL database in the cluster (whose url is provided) with name todo_user if not exists
+const connection_url = "mongodb+srv://vc160222:x8TOIKGv5jVJDlXV@weekthreepoint2database.tjr09d4.mongodb.net/todo_user"; // secret  // this will create noSQL database in the cluster (whose url is provided) with name todo_user if not exists
 
 async function connection() {
     try {
@@ -57,6 +58,34 @@ function userRequestValidation(req, res, next) {
     next();
 }
 
+// checking in db user exist or not
+async function checkUserExist(req, res, next) {
+    const username = req.body.username;
+    const password = req.body.password;
+    const email = req.body.email;
+    // this will query the db and find all the elements with username and password and email
+
+    try {
+        const response = await User.find({
+            username, password, email
+        }) // do not need to pass all properties we can do searching with one property too
+
+        console.log(response);
+
+        if(!response.length) {
+            res.status(411).json({
+                msg: "You does not exist in the DB please signup 😀"
+            })
+        }
+
+        next();
+    } catch(err) {
+        throw err;
+    }
+
+
+}
+
 app.post("/signup", userRequestValidation, async function(req, res) {
     // nodeJS / express converts the properties coming in headers automatically to lowercase by-default
     const username = req.body.username;
@@ -83,6 +112,28 @@ app.post("/signup", userRequestValidation, async function(req, res) {
     }
 })
 
+// signin route and provide it the valid jwt (token) -> provides us accessing the route-handler without password, if token is leaked you will be in trouble because any can send the request using this
+
+// if jwtPassword is leaked -> anyone Can "Generate Valid Tokens" because they know the secret and know they have to make jwt tokens using that password
+
+// when hitting the backend they will be sending the fake token (but valid) since they are created using the orignal password and hence we can access the logic
+app.post("/signin", userRequestValidation, checkUserExist ,function(req, res) {
+    const username = req.body.username;
+    const email = req.body.email;
+
+    // consider jwtpassword as stamp
+    // everyone has that system
+    // if my stamp is exposed the other can make fake tokens using the stamp and then send tokens to the real application and since token is made from the original stamp the system will pass it
+
+    const token = jwt.sign(JSON.stringify({
+        username,
+        email
+    }), jwtPass);
+
+    res.status(200).json({
+        token
+    })
+})
 
 
 app.listen(3000);
@@ -115,3 +166,5 @@ app.use(function(req, res, next) {
 
 
 // creating an http server
+
+// jsonWebToken is implementation of jwt -> which represents a system that takes JSON data convert it into structured string using hasing + encryption + decryption + password such that we can convert them but the whose has the password can only verify the token
