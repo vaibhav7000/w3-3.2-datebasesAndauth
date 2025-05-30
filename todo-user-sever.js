@@ -75,7 +75,8 @@ async function checkUserExist(req, res, next) {
 
         console.log(response);
 
-        if(!response.length) {
+        if(!response) {
+            // response -> null
             res.status(411).json({
                 msg: "username, email, or password are incorrects"
             })
@@ -99,10 +100,10 @@ async function sameUserNameOrEmailExistInDB(req, res, next) {
             username
         });
 
-        if(result.length) {
+        if(result) {
             // username already exist 
             res.status(411).json({
-                msg: "username or email already exist, try different"
+                msg: "username already exist in our database"
             })
             return
         }
@@ -116,7 +117,7 @@ async function sameUserNameOrEmailExistInDB(req, res, next) {
             email
         });
 
-        if(result.length) {
+        if(result) {
             res.status(411).json({
                 msg: "This email already exist in our database"
             })
@@ -209,7 +210,7 @@ const todoSchema = new mongoose.Schema({
 })
 
 // Everything in the mongoose is derived from Schema (structure) -> then creating models (kind of class) through which we will create documents / objects
-const Todo = new mongoose.Model('Todo', todoSchema) // created the Model and the string passed to it represent the collection in the mongoDB where the data will be stored in the JSON format
+const Todo = new mongoose.model('Todo', todoSchema) // created the Model and the string passed to it represent the collection in the mongoDB where the data will be stored in the JSON format
 
 // zod with todo
 const todoInputValidator = z.object({
@@ -230,15 +231,52 @@ function todoInputValidation(req, res, next) {
         })
     }
 
-    next;
+    next();
 }
 
-app.post("/todos", verfiyJWT, todoInputValidation, function(req, res) {
-    const user = req.body.user;
+app.post("/todos", verfiyJWT, todoInputValidation, async function(req, res) {
+    const user = req.body.user; // these we get from jwt verification
     const todo = req.body.todo;
+
+    // if the jwt is verified than it will belong to our system
 
     // after doing all the validation know store the todo to the database
     // When storing the todo, that todo belongs to the User and there will be one to many relationship between (user and todo) and hence we will add a extra property on the many side (todo-side) (so that it will refer to the user). This is provided by special type provided by mongoose
+
+    // first get the user so that linking would be done
+    try {
+        const dbUser = await User.findOne({
+            username: user.username,
+            email: user.email
+        })
+
+        if(!dbUser) {
+            res.status(403).json({
+                msg: "You does not exist in the DB, and you already have verified jwt 😱"
+            })
+
+            return;
+        }
+
+        const finalTodo = new Todo({
+            ...todo, 
+            owner: dbUser._id, // added by the mongoDB for every document / JSON for identification
+        });
+
+        try {
+            const response = await finalTodo.save();
+
+            console.log(response);
+
+            res.status(200).json({
+                msg: "your todo is added"
+            })
+        } catch(err) {
+            throw err;
+        }
+    } catch(err) {
+        throw err;
+    }
 
 })
 
