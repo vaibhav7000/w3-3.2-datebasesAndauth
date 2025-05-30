@@ -298,7 +298,7 @@ app.put("/todos/:todoId", verfiyJWT, todoInputValidation, async function(req, re
             }, {
                 new: true, // returns the updated document
                 runValidators: true,
-                upsert: true, // if no id found => will create new document
+                upsert: true, // if no id found => will create new document if _id = null
                 // context: "query", // Enables proper validator context when updating nested fields
             })
 
@@ -312,6 +312,49 @@ app.put("/todos/:todoId", verfiyJWT, todoInputValidation, async function(req, re
     } catch(err) {
         throw err;
     }
+})
+
+// creating route-handler for deleting todos
+app.delete("/todos/:todoId", verfiyJWT, async function(req, res) {
+    // these types of parameter that we pass in routes are called route-params
+    const client = req.body.user;
+    const todoId = req.params.todoId;
+
+    try {
+        const user = await User.findOne(client);
+
+        if(!client) {
+            res.status(403).json({
+                msg: "You have our jwt secret right!!"
+            })
+            return
+        }
+
+        try {
+            // deleting the todo using findByIdAndDelete (if found the document will delete and return that else if not found will return null)
+
+            const deletedDocument = await Todo.findByIdAndDelete(todoId);
+
+            if(!deletedDocument) {
+                // document does not present in the database
+                res.status(404).json({
+                    msg: "Todo does not found in the database"
+                })
+                return
+            }
+
+            res.status(200).json({
+                msg: "Todo deleted",
+                deletedDocument
+            })
+        } catch (error) {
+            throw error;
+        }
+
+    } catch (error) {
+        throw error;
+    }
+    
 })
 
 app.post("/todos", verfiyJWT, todoInputValidation, async function(req, res) {
@@ -362,7 +405,7 @@ app.post("/todos", verfiyJWT, todoInputValidation, async function(req, res) {
 
 app.listen(3000);
 
-
+// the _id provided by the mongoDB follow some rules / syntax if we does not follow or harm the _id there will be error throw by mongoose from mongDB
 
 // when we does not provide any route to the middlewares -> it matches with all request but the request should be able to reach to this middle-ware handler, mean it should not match with the above
 
