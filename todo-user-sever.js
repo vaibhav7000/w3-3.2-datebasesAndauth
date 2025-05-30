@@ -234,6 +234,86 @@ function todoInputValidation(req, res, next) {
     next();
 }
 
+// getting all todos for the user
+app.get("/todos", verfiyJWT, async function(req, res) {
+    const user = req.body.user;
+
+    // get the userId provided added by the mongoDB
+    try {
+        const finalUser = await User.findOne({
+            username: user.username,
+            email: user.email
+        })
+
+        if(!finalUser) {
+            res.status(403).json({
+                msg: "Your are not present inside DB, but you have verified jwt means you have our jwt secret"
+            })
+            return
+        }
+
+        try {
+            const allTodos = await Todo.find({
+                owner: finalUser._id
+            })
+
+        // getting all the todos based on the relational id
+
+        res.status(200).json({
+            allTodos
+        })
+        } catch(err) {
+            throw err;
+        }
+    } catch(err) {
+        throw err;
+    }
+})
+
+// creating route-handler for updating specfic todo
+app.put("/todos/:todoId", verfiyJWT, todoInputValidation, async function(req, res) {
+    const client = req.body.user;
+    const todoId = req.params.todoId; // send from the client which you want to update todo
+    const todo = req.body.todo;
+
+    // get the user from the database
+    try {
+        const user = await User.findOne({
+            username: client.username,
+            email: client.email
+        })
+
+        // kind of double checking 1. verifyJWT and 2. user present inside DB
+        if(!user) {
+            res.status(403).json({
+                 msg: "Your are not present inside DB, but you have verified jwt means you have our jwt secret"
+            })
+            return;
+        }
+
+        try {
+            // Using findByIdAndUpdate to update the todo if the "id" does not exist we will create new document (this will be passed in options). we can also run again the mongoose validation when updating the document passing a flag in options
+            const updatedTodo = await Todo.findByIdAndUpdate(todoId, {
+                ...todo, // updated todo properties send from the client
+            }, {
+                new: true, // returns the updated document
+                runValidators: true,
+                upsert: true, // if no id found => will create new document
+                // context: "query", // Enables proper validator context when updating nested fields
+            })
+
+            res.status(200).json({
+                msg: "Your todo is updated",
+                updatedTodo
+            })
+        } catch(err) {
+            throw err;
+        }
+    } catch(err) {
+        throw err;
+    }
+})
+
 app.post("/todos", verfiyJWT, todoInputValidation, async function(req, res) {
     const user = req.body.user; // these we get from jwt verification
     const todo = req.body.todo;
