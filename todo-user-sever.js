@@ -6,6 +6,8 @@ const jwtPass = "random123"; // secret
 const mongoose = require("mongoose");
 const connection_url = "mongodb+srv://vc160222:x8TOIKGv5jVJDlXV@weekthreepoint2database.tjr09d4.mongodb.net/todo_user"; // secret  // this will create noSQL database in the cluster (whose url is provided) with name todo_user if not exists
 
+// our application will have unique username for the users
+
 async function connection() {
     try {
     const connection = await mongoose.connect(connection_url); // this returns promise which means this is asynchronous call will be delegated to other thread
@@ -66,7 +68,8 @@ async function checkUserExist(req, res, next) {
     // this will query the db and find all the elements with username and password and email
 
     try {
-        const response = await User.find({
+        // since have unqiue user name inside the db we will use findOne
+        const response = await User.findOne({
             username, password, email
         }) // do not need to pass all properties we can do searching with one property too
 
@@ -74,7 +77,7 @@ async function checkUserExist(req, res, next) {
 
         if(!response.length) {
             res.status(411).json({
-                msg: "You does not exist in the DB please signup 😀"
+                msg: "username, email, or password are incorrects"
             })
         }
 
@@ -86,7 +89,63 @@ async function checkUserExist(req, res, next) {
 
 }
 
-app.post("/signup", userRequestValidation, async function(req, res) {
+async function sameUserNameOrEmailExistInDB(req, res, next) {
+    const username = req.body.username;
+    const email = req.body.email;
+
+    // Using the findOne method because in our Db we will have unique username
+    try {
+        const result = await User.findOne({
+            username
+        });
+
+        if(result.length) {
+            // username already exist 
+            res.status(411).json({
+                msg: "username or email already exist, try different"
+            })
+            return
+        }
+    } catch(err) {
+        throw err
+    }
+
+    // checking email exist
+    try {
+        const result = User.findOne({
+            email
+        });
+
+        if(result.length) {
+            res.status(411).json({
+                msg: "This email already exist in our database"
+            })
+            return
+        }
+
+    } catch(err) {
+        throw err;
+    }
+
+    next();
+}
+
+function verfiyJWT(req, res, next) {
+    const token = req.headers["token"];
+
+    try {
+        const verification = jwt.verify(token, jwtPass); // if error will throw hence use try catch, else provides us the JSON data in valid format
+        console.log(verification);
+        req.body.user = verification;
+        next();
+    } catch(err) {
+        res.status(411).json({
+            msg: "You are not authenticated to use this route"
+        })
+    }
+}
+
+app.post("/signup", userRequestValidation, sameUserNameOrEmailExistInDB ,async function(req, res) {
     // nodeJS / express converts the properties coming in headers automatically to lowercase by-default
     const username = req.body.username;
     const password = req.body.password;
@@ -135,6 +194,53 @@ app.post("/signin", userRequestValidation, checkUserExist ,function(req, res) {
     })
 })
 
+// We have created the login and signup flow for the user
+// creating the todo logic and storing it in the noSQL database
+
+// todo schema using mongoose
+const todoSchema = new mongoose.Schema({
+    title: String,
+    description: String,
+    completed: Boolean,
+    owner: {
+        type: mongoose.Types.ObjectId,
+        ref: 'User' // this represents the Model name to which we want to ref
+    }
+})
+
+// Everything in the mongoose is derived from Schema (structure) -> then creating models (kind of class) through which we will create documents / objects
+const Todo = new mongoose.Model('Todo', todoSchema) // created the Model and the string passed to it represent the collection in the mongoDB where the data will be stored in the JSON format
+
+// zod with todo
+const todoInputValidator = z.object({
+    title: z.string(),
+    description: z.string(),
+    completed: z.boolean()
+})
+
+function todoInputValidation(req, res, next) {
+    const todo = req.body.todo;
+
+    const result = todoInputValidator.safeParse(todo);
+
+    if(!result.success) {
+        res.status(411).json({
+            issues: result.error.issues,
+            name: result.error.name
+        })
+    }
+
+    next;
+}
+
+app.post("/todos", verfiyJWT, todoInputValidation, function(req, res) {
+    const user = req.body.user;
+    const todo = req.body.todo;
+
+    // after doing all the validation know store the todo to the database
+    // When storing the todo, that todo belongs to the User and there will be one to many relationship between (user and todo) and hence we will add a extra property on the many side (todo-side) (so that it will refer to the user). This is provided by special type provided by mongoose
+
+})
 
 app.listen(3000);
 
